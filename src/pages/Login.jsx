@@ -1,18 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import air from "../assert/airtable.png";
 
 export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
-      // Redirect user to backend OAuth route
       window.location.href = "http://localhost:4000/api/v1/auth/login";
-      // Once the backend redirects back with token, you can store it and:
-      // localStorage.setItem("token", <token>);
-      // toast.success("Logged in successfully!");
-      // navigate("/dashboard");
     } catch (err) {
       console.error(err);
       toast.error("Login failed. Please try again.");
@@ -20,13 +16,23 @@ export default function Login() {
   };
 
   return (
-    <div className="w-screen h-screen flex items-center justify-center" style={{ background: "linear-gradient(to top right, #FFBFCA, #FFE7EB)" }}>
+    <div
+      className="w-screen h-screen flex items-center justify-center"
+      style={{ background: "linear-gradient(to top right, #FFBFCA, #FFE7EB)" }}
+    >
       <button
         onClick={handleLogin}
-        className="px-8 py-4 bg-[#FA1239] text-white text-xl font-bold rounded-lg shadow-lg hover:opacity-90 transition"
+        className="flex items-center gap-4 px-8 sm:px-10 py-4 sm:py-5 bg-[#FA1239] text-white text-lg sm:text-xl font-bold rounded-lg shadow-lg hover:opacity-90 transition"
       >
-        Login with Airtable
+        <img
+          src={air}
+          alt="Airtable Logo"
+          className="w-fit h-fit sm:w-10 sm:h-10"
+        />
+        <span>Login with Airtable</span>
       </button>
     </div>
   );
 }
+
+

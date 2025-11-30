@@ -3,13 +3,10 @@ const router = express.Router();
 const User = require("../models/User");
 const axios = require("axios");
 
-// Middleware to verify user is logged in and set req.userId
 const authMiddleware = require("../middleware/auth");
 router.use(authMiddleware);
 
-// --------------------------
-// 1️⃣ GET /bases - fetch Airtable bases
-// --------------------------
+
 router.get("/bases", async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -26,9 +23,7 @@ router.get("/bases", async (req, res) => {
   }
 });
 
-// --------------------------
-// 2️⃣ GET /tables?baseId=... - fetch tables of a base
-// --------------------------
+
 router.get("/tables", async (req, res) => {
   const { baseId } = req.query;
   if (!baseId) return res.status(400).json({ error: "baseId is required" });
@@ -49,9 +44,7 @@ router.get("/tables", async (req, res) => {
   }
 });
 
-// --------------------------
-// 3️⃣ GET /fields/:baseId/:tableId - fetch fields of a table (only supported types)
-// --------------------------
+
 router.get("/fields/:baseId/:tableId", async (req, res) => {
   const { baseId, tableId } = req.params;
   if (!baseId || !tableId) return res.status(400).json({ error: "baseId and tableId are required" });

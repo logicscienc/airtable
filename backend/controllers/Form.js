@@ -1,8 +1,6 @@
 const Form = require("../models/Form");
 
-// ------------------------------------------------------
-// CREATE NEW FORM
-// ------------------------------------------------------
+
 exports.createForm = async (req, res) => {
   try {
     const { airtableBaseId, airtableTableId, questions, title } = req.body;
@@ -15,10 +13,7 @@ exports.createForm = async (req, res) => {
       });
     }
 
-    // -------------------------------------------------------
-    // 1. Get Airtable Access Token from req.user
-    // (Your auth middleware MUST attach it when verifying JWT)
-    // -------------------------------------------------------
+ 
     const airtableToken = req.user?.airtableAccessToken;
 
     if (!airtableToken) {
@@ -28,9 +23,7 @@ exports.createForm = async (req, res) => {
       });
     }
 
-    // -------------------------------------------------------
-    // 2. Fetch the table metadata from Airtable
-    // -------------------------------------------------------
+    
     let airtableTableName = null;
 
     try {
@@ -48,18 +41,13 @@ exports.createForm = async (req, res) => {
 
     } catch (metaErr) {
       console.error("Airtable Metadata Fetch Failed:", metaErr.response?.data || metaErr);
-      // But DO NOT block form creation — fallback title will be used
+      
     }
 
-    // -------------------------------------------------------
-    // 3. Compute final title priority
-    // user provided > airtable table name > generic fallback
-    // -------------------------------------------------------
+   
     const finalTitle = title || airtableTableName || "Untitled Form";
 
-    // -------------------------------------------------------
-    // 4. Save the form
-    // -------------------------------------------------------
+ 
     const form = await Form.create({
       owner: req.userId,
       airtableBaseId,
@@ -83,9 +71,6 @@ exports.createForm = async (req, res) => {
   }
 };
 
-// ------------------------------------------------------
-// GET ALL FORMS OF LOGGED-IN USER
-// ------------------------------------------------------
 exports.getMyForms = async (req, res) => {
   try {
     const forms = await Form.find({ owner: req.userId }).sort({ createdAt: -1 });
@@ -101,9 +86,7 @@ exports.getMyForms = async (req, res) => {
   }
 };
 
-// ------------------------------------------------------
-// GET SINGLE FORM BY ID
-// ------------------------------------------------------
+
 exports.getFormById = async (req, res) => {
   try {
     const form = await Form.findOne({
@@ -128,9 +111,7 @@ exports.getFormById = async (req, res) => {
   }
 };
 
-// ------------------------------------------------------
-// UPDATE FORM
-// ------------------------------------------------------
+
 exports.updateForm = async (req, res) => {
   try {
     const updates = req.body;
@@ -159,9 +140,6 @@ exports.updateForm = async (req, res) => {
   }
 };
 
-// ------------------------------------------------------
-// HARD DELETE FORM
-// ------------------------------------------------------
 exports.deleteForm = async (req, res) => {
   try {
     const form = await Form.findOneAndDelete({

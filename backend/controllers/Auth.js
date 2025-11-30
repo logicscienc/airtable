@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const {
   CLIENT_ID,
-  CLIENT_SECRET, // it's fine to keep in config, but we will NOT use it for PKCE flow
+  CLIENT_SECRET, 
   REDIRECT_URI,
   AIRTABLE_TOKEN_URL,
   AIRTABLE_USERINFO_URL,
@@ -11,9 +11,7 @@ const {
 
 require("dotenv").config();
 
-// --------------------------
-// Helper: Base64URL Encoding
-// --------------------------
+
 function base64UrlEncode(buffer) {
   return buffer
     .toString("base64")
@@ -22,9 +20,8 @@ function base64UrlEncode(buffer) {
     .replace(/=+$/, "");
 }
 
-// --------------------------
-// 1️⃣ LOGIN — START OAUTH WITH PKCE
-// --------------------------
+
+
 exports.login = async (req, res) => {
   try {
     console.log("=== LOGIN HIT ===");
@@ -32,10 +29,10 @@ exports.login = async (req, res) => {
     // Generate state
     const state = crypto.randomBytes(16).toString("hex");
 
-    // Generate PKCE verifier (43-128 chars)
+
     const codeVerifier = base64UrlEncode(crypto.randomBytes(32));
 
-    // SHA256(code_verifier) -> code_challenge
+    
     const hash = crypto.createHash("sha256").update(codeVerifier).digest();
     const codeChallenge = base64UrlEncode(hash);
 
@@ -43,7 +40,7 @@ exports.login = async (req, res) => {
     res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", secure: false, maxAge: 1000 * 60 * 5 });
     res.cookie("pkce_verifier", codeVerifier, { httpOnly: true, sameSite: "lax", secure: false, maxAge: 1000 * 60 * 5 });
 
-    // Build OAuth URL (include PKCE params)
+   
    const scopes = [
   "data.records:read",
   "data.records:write",
@@ -72,9 +69,7 @@ const authUrl =
   }
 };
 
-// --------------------------
-// 2️⃣ CALLBACK — EXCHANGE CODE FOR TOKENS (PKCE-only)
-// --------------------------
+
 
 exports.callback = async (req, res) => {
   try {
@@ -90,9 +85,7 @@ exports.callback = async (req, res) => {
     if (!code) return res.status(400).json({ message: "Authorization code missing" });
     if (!codeVerifier) return res.status(400).json({ message: "Missing PKCE verifier" });
 
-    /* -------------------------------------------------
-       1️⃣ Exchange Authorization Code for Access Token
-    -------------------------------------------------- */
+
     const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64");
     const authHeader = `Basic ${credentials}`;
 
@@ -124,9 +117,7 @@ exports.callback = async (req, res) => {
 
     const accessToken = tokenData.access_token;
 
-    /* -------------------------------------------------
-       2️⃣ Fetch Airtable User Profile
-    -------------------------------------------------- */
+  
     const userInfoResponse = await fetch(AIRTABLE_USERINFO_URL, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -142,9 +133,7 @@ exports.callback = async (req, res) => {
       });
     }
 
-    /* -------------------------------------------------
-       3️⃣ Store User in MongoDB
-    -------------------------------------------------- */
+
     let user = await User.findOne({ airtableUserId: userInfo.id });
 
     if (!user) {
@@ -167,9 +156,7 @@ exports.callback = async (req, res) => {
     res.clearCookie("pkce_verifier");
     res.clearCookie("oauth_state");
 
-    /* -------------------------------------------------
-       4️⃣ OPTIONAL: Store Airtable tokens in cookies
-    -------------------------------------------------- */
+    
     res.cookie("airtable_access_token", accessToken, {
       httpOnly: true,
       sameSite: "lax",
@@ -190,9 +177,7 @@ exports.callback = async (req, res) => {
       secure: false,
     });
 
-    /* -------------------------------------------------
-       5️⃣ Issue JWT containing Airtable Tokens
-    -------------------------------------------------- */
+  
     const jwtToken = jwt.sign(
       {
         userId: user._id,

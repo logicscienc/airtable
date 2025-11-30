@@ -15,18 +15,17 @@ const CLIENT_ID = process.env.AIRTABLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.AIRTABLE_CLIENT_SECRET;
 const REDIRECT_URI = process.env.AIRTABLE_REDIRECT_URI;
 
-// generate a random PKCE code verifier
+
 function generateCodeVerifier() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-// generate code_challenge from code_verifier
 function generateCodeChallenge(codeVerifier) {
   const hash = crypto.createHash("sha256").update(codeVerifier).digest();
   return hash.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-// build auth URL with PKCE
+
 function buildAuthUrl(state, codeChallenge) {
   if (!SCOPES || !CLIENT_ID || !REDIRECT_URI) {
     throw new Error("Missing SCOPES, CLIENT_ID, or REDIRECT_URI");

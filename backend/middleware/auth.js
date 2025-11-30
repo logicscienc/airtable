@@ -11,16 +11,15 @@ module.exports = function authMiddleware(req, res, next) {
 
     const token = authHeader.split(" ")[1];
 
-    // Decode JWT
+   
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Attach entire payload
+  
     req.user = decoded;
 
-    // Attach userId
+    
     req.userId = decoded.userId;
 
-    // Attach Airtable tokens (if they exist in JWT)
     req.airtableAccessToken = decoded.airtableAccessToken || null;
     req.airtableRefreshToken = decoded.airtableRefreshToken || null;
 

@@ -14,7 +14,6 @@ export default function Edit() {
       try {
         const res = await getFormById(formId);
 
-        // Handle both API formats
         const data =
           res.data?.data?.[0] ||
           res.data?.data ||
@@ -33,16 +32,10 @@ export default function Edit() {
     fetchForm();
   }, [formId]);
 
-  // -------------------------
-  // Update simple form fields
-  // -------------------------
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  // -------------------------
-  // Update question fields
-  // -------------------------
   const updateQuestion = (index, key, value) => {
     setForm((prev) => {
       const newQuestions = [...prev.questions];
@@ -51,9 +44,6 @@ export default function Edit() {
     });
   };
 
-  // -------------------------
-  // Save Form
-  // -------------------------
   const handleSave = async () => {
     try {
       await updateForm(form._id, form);
@@ -69,26 +59,22 @@ export default function Edit() {
   if (!form) return <p>Form not found</p>;
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-4 text-[#FA1239]">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-[#FA1239]">
         Edit Form
       </h1>
 
-      {/* ---------------------- */}
-      {/* EDIT FORM TITLE */}
-      {/* ---------------------- */}
+      {/* Form Title */}
       <label className="block font-semibold mb-1">Form Title</label>
       <input
         type="text"
         value={form.title || ""}
         onChange={(e) => updateField("title", e.target.value)}
-        className="border p-2 w-full mb-6"
+        className="border p-2 w-full mb-6 sm:text-base text-sm rounded"
       />
 
-      {/* ---------------------- */}
-      {/* LIST OF QUESTIONS */}
-      {/* ---------------------- */}
-      <h2 className="text-xl font-semibold mb-3">Questions</h2>
+      {/* Questions */}
+      <h2 className="text-xl sm:text-2xl font-semibold mb-3">Questions</h2>
 
       <div className="space-y-6">
         {form.questions?.map((q, index) => (
@@ -104,7 +90,7 @@ export default function Edit() {
               onChange={(e) =>
                 updateQuestion(index, "label", e.target.value)
               }
-              className="border p-2 w-full"
+              className="border p-2 w-full sm:text-base text-sm rounded"
             />
 
             {/* Type */}
@@ -112,7 +98,7 @@ export default function Edit() {
             <select
               value={q.type || "shortText"}
               onChange={(e) => updateQuestion(index, "type", e.target.value)}
-              className="border p-2 w-full"
+              className="border p-2 w-full sm:text-base text-sm rounded"
             >
               <option value="shortText">Short Text</option>
               <option value="longText">Long Text</option>
@@ -132,10 +118,12 @@ export default function Edit() {
               <span>Required</span>
             </label>
 
-            {/* Options Field (only for Select types) */}
+            {/* Options */}
             {(q.type === "singleSelect" || q.type === "multiSelect") && (
               <div className="mt-3">
-                <label className="block font-semibold mb-1">Options (comma separated)</label>
+                <label className="block font-semibold mb-1">
+                  Options (comma separated)
+                </label>
                 <input
                   type="text"
                   value={(q.options || []).join(",")}
@@ -146,7 +134,7 @@ export default function Edit() {
                       e.target.value.split(",").map((opt) => opt.trim())
                     )
                   }
-                  className="border p-2 w-full"
+                  className="border p-2 w-full sm:text-base text-sm rounded"
                 />
               </div>
             )}
@@ -157,12 +145,13 @@ export default function Edit() {
       {/* Save Button */}
       <button
         onClick={handleSave}
-        className="bg-[#FA1239] text-white px-6 py-2 rounded mt-6 block"
+        className="bg-[#FA1239] text-white px-6 py-2 rounded mt-6 block w-full sm:w-auto text-center sm:text-base text-sm"
       >
         Save Changes
       </button>
     </div>
   );
 }
+
 
 

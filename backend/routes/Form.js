@@ -4,10 +4,7 @@ const router = express.Router();
 const Form = require("../controllers/Form");
 const auth = require("../middleware/auth");
 
-// --------------------------
-// PROTECTED FORM ROUTES
-// --------------------------
-// All routes require the user to be logged in
+
 router.use(auth);
 
 // Create a new form

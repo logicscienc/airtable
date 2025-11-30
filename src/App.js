@@ -28,7 +28,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
 
         {/* Form Routes */}
-        <Route path="/form/:formId" element={<View />} />       {/* View / Fill form */}
+        <Route path="/form/:formId" element={<View />} />       
         <Route path="/form/:formId/edit" element={<Edit />} /> 
          {/* Edit form */}
 

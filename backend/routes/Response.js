@@ -4,10 +4,7 @@ const router = express.Router();
 const Response = require("../controllers/Response");
 const auth = require("../middleware/auth");
 
-// --------------------------
-// PROTECTED RESPONSE ROUTES
-// --------------------------
-// All routes require the user to be logged in
+
 router.use(auth);
 
 // Create a new response

@@ -7,11 +7,9 @@ const {
   CLIENT_SECRET
 } = require("../config/airtableOAuth");
 
-// ------------------------------------------------------------
-// Helper: Refresh Airtable Access Token
-// ------------------------------------------------------------
+
 async function refreshAccessToken(user) {
-  // If token not expired, return existing token
+ 
   if (Date.now() < user.tokenExpiresAt) {
     return user.accessToken;
   }
@@ -45,12 +43,10 @@ const res = await fetch(AIRTABLE_TOKEN_URL, {
   return data.access_token;
 }
 
-// ------------------------------------------------------------
-// CREATE RESPONSE + CREATE RECORD IN AIRTABLE
-// ------------------------------------------------------------
+
 exports.createResponse = async (req, res) => {
   try {
-    const userId = req.userId; // from auth middleware
+    const userId = req.userId; 
     const { formId, answers } = req.body;
 
     if (!formId || !answers) {
@@ -65,7 +61,7 @@ exports.createResponse = async (req, res) => {
     const user = await User.findById(userId);
     const accessToken = await refreshAccessToken(user);
 
-    // Build Airtable field mapping for record creation
+    
     const airtableFields = {};
 
     form.questions.forEach((q) => {
@@ -108,9 +104,7 @@ exports.createResponse = async (req, res) => {
   }
 };
 
-// ------------------------------------------------------------
-// GET RESPONSES FOR A FORM
-// ------------------------------------------------------------
+
 exports.getResponses = async (req, res) => {
   try {
     const { formId } = req.params;
@@ -124,9 +118,6 @@ exports.getResponses = async (req, res) => {
   }
 };
 
-// ------------------------------------------------------------
-// GET SINGLE RESPONSE
-// ------------------------------------------------------------
 exports.getResponse = async (req, res) => {
   try {
     const response = await Response.findById(req.params.id);
@@ -140,9 +131,6 @@ exports.getResponse = async (req, res) => {
   }
 };
 
-// ------------------------------------------------------------
-// UPDATE RESPONSE + UPDATE AIRTABLE RECORD
-// ------------------------------------------------------------
 exports.updateResponse = async (req, res) => {
   try {
     const userId = req.userId;
@@ -188,40 +176,67 @@ exports.updateResponse = async (req, res) => {
   }
 };
 
-// ------------------------------------------------------------
-// DELETE RESPONSE + DELETE AIRTABLE RECORD
-// ------------------------------------------------------------
+
 exports.deleteResponse = async (req, res) => {
   try {
     const userId = req.userId;
+    console.log(" DELETE REQUEST for response:", req.params.id);
+    console.log(" UserID:", userId);
 
+    // 1. Find response
     const response = await Response.findById(req.params.id);
-    if (!response) return res.status(404).json({ message: "Response not found" });
+    if (!response) {
+      console.log("Response not found");
+      return res.status(404).json({ message: "Response not found" });
+    }
+    console.log(" Found response:", response);
 
+    // 2. Find form
     const form = await Form.findById(response.form);
+    console.log(" Found form:", form);
+
+    // 3. Find user
     const user = await User.findById(userId);
+    console.log(" Found user:", user);
 
+    // 4. Refresh Airtable Access Token
     const accessToken = await refreshAccessToken(user);
+    console.log(" Airtable token refreshed:", accessToken ? "YES" : "NO");
 
-    // Delete in Airtable
+    // 5. Delete in Airtable if record exists
     if (response.airtableRecordId) {
-      await fetch(
-        `https://api.airtable.com/v0/${form.airtableBaseId}/${form.airtableTableId}/${response.airtableRecordId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      console.log(" Attempting Airtable delete...");
+
+      const url = `https://api.airtable.com/v0/${form.airtableBaseId}/${form.airtableTableId}/${response.airtableRecordId}`;
+
+      console.log("Airtable DELETE URL:", url);
+
+      const airRes = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const airData = await airRes.text();
+      console.log("Airtable delete response:", airData);
     }
 
-    // Delete from MongoDB
-    await response.deleteOne();
+    // 6. Delete from MongoDB
+    console.log(" Deleting from MongoDB...");
+    await Response.findByIdAndDelete(response._id);
 
-    res.json({ message: "Response deleted successfully" });
+    console.log(" Successfully deleted from DB");
+
+    return res.json({ message: "Response deleted successfully" });
+
   } catch (err) {
-    console.error("Delete response error:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error(" Delete response error:", err);
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
+
+
