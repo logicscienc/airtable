@@ -44,17 +44,24 @@ exports.login = async (req, res) => {
     res.cookie("pkce_verifier", codeVerifier, { httpOnly: true, sameSite: "lax", secure: false, maxAge: 1000 * 60 * 5 });
 
     // Build OAuth URL (include PKCE params)
-    const authUrl =
-      `https://airtable.com/oauth2/v1/authorize` +
-      `?client_id=${CLIENT_ID}` +
-      `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-      `&response_type=code` +
-     "&scope=data.records:read user.email:read"
+   const scopes = [
+  "data.records:read",
+  "data.records:write",
+  "schema.bases:read",
+  "user.email:read"
+];
 
- + 
-      `&code_challenge=${codeChallenge}` +
-      `&code_challenge_method=S256` +
-      `&state=${state}`;
+
+const authUrl =
+  `https://airtable.com/oauth2/v1/authorize` +
+  `?client_id=${CLIENT_ID}` +
+  `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+  `&response_type=code` +
+  `&scope=${scopes.join(" ")}` +
+  `&code_challenge=${codeChallenge}` +
+  `&code_challenge_method=S256` +
+  `&state=${state}`;
+
 
     console.log("Redirecting to:", authUrl);
 
@@ -77,20 +84,15 @@ exports.callback = async (req, res) => {
     const stateStored = req.cookies.oauth_state;
     const codeVerifier = req.cookies.pkce_verifier;
 
-    console.log("State from Airtable:", stateReturned);
-    console.log("State stored in cookie:", stateStored);
-
     if (!stateReturned || stateReturned !== stateStored) {
       return res.status(400).json({ message: "Invalid state" });
     }
     if (!code) return res.status(400).json({ message: "Authorization code missing" });
     if (!codeVerifier) return res.status(400).json({ message: "Missing PKCE verifier" });
 
-    console.log("Exchanging code for tokens...");
-
-    /* --------------------------------------------
-       🔥 FIX: SEND Authorization header (Basic)
-    -------------------------------------------- */
+    /* -------------------------------------------------
+       1️⃣ Exchange Authorization Code for Access Token
+    -------------------------------------------------- */
     const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64");
     const authHeader = `Basic ${credentials}`;
 
@@ -101,34 +103,30 @@ exports.callback = async (req, res) => {
     params.append("redirect_uri", REDIRECT_URI);
     params.append("code_verifier", codeVerifier);
 
-    console.log("Token request params:", params.toString());
-
     const tokenResponse = await fetch(AIRTABLE_TOKEN_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": authHeader, // 🚀 REQUIRED
+        "Authorization": authHeader,
       },
       body: params,
     });
 
-    console.log("Token HTTP status:", tokenResponse.status);
     const tokenData = await tokenResponse.json();
     console.log("Token Response:", tokenData);
 
     if (!tokenData.access_token) {
-      return res
-        .status(500)
-        .json({ message: "Failed to obtain token", detail: tokenData });
+      return res.status(500).json({
+        message: "Failed to obtain token",
+        detail: tokenData,
+      });
     }
 
     const accessToken = tokenData.access_token;
 
-    /* --------------------------------------------
-       3️⃣ Get User Info
-    -------------------------------------------- */
-    console.log("Fetching user profile with access token...");
-
+    /* -------------------------------------------------
+       2️⃣ Fetch Airtable User Profile
+    -------------------------------------------------- */
     const userInfoResponse = await fetch(AIRTABLE_USERINFO_URL, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -144,9 +142,9 @@ exports.callback = async (req, res) => {
       });
     }
 
-    /* --------------------------------------------
-       4️⃣ Save user in MongoDB
-    -------------------------------------------- */
+    /* -------------------------------------------------
+       3️⃣ Store User in MongoDB
+    -------------------------------------------------- */
     let user = await User.findOne({ airtableUserId: userInfo.id });
 
     if (!user) {
@@ -165,37 +163,44 @@ exports.callback = async (req, res) => {
       await user.save();
     }
 
-    // Clear cookies
+    // Clear verification cookies
     res.clearCookie("pkce_verifier");
     res.clearCookie("oauth_state");
 
-
+    /* -------------------------------------------------
+       4️⃣ OPTIONAL: Store Airtable tokens in cookies
+    -------------------------------------------------- */
     res.cookie("airtable_access_token", accessToken, {
-  httpOnly: true,
-  sameSite: "lax",
-  secure: false,  // use true only in production
-  maxAge: tokenData.expires_in * 1000, 
-});
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: tokenData.expires_in * 1000,
+    });
 
-res.cookie("airtable_refresh_token", tokenData.refresh_token, {
-  httpOnly: true,
-  sameSite: "lax",
-  secure: false,
-  maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-});
+    res.cookie("airtable_refresh_token", tokenData.refresh_token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
 
-res.cookie("airtable_user_id", userInfo.id, {
-  httpOnly: false,
-  sameSite: "lax",
-  secure: false,
-});
+    res.cookie("airtable_user_id", userInfo.id, {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: false,
+    });
 
-
-    /* --------------------------------------------
-       5️⃣ Issue JWT for your frontend
-    -------------------------------------------- */
+    /* -------------------------------------------------
+       5️⃣ Issue JWT containing Airtable Tokens
+    -------------------------------------------------- */
     const jwtToken = jwt.sign(
-      { userId: user._id },
+      {
+        userId: user._id,
+        email: user.email,
+        airtableAccessToken: accessToken,
+        airtableRefreshToken: tokenData.refresh_token,
+        airtableUserId: userInfo.id,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -204,6 +209,7 @@ res.cookie("airtable_user_id", userInfo.id, {
     console.log("Redirecting to frontend:", frontendRedirect);
 
     return res.redirect(frontendRedirect);
+
   } catch (err) {
     console.error("Callback error:", err);
     return res.status(500).json({
@@ -212,6 +218,7 @@ res.cookie("airtable_user_id", userInfo.id, {
     });
   }
 };
+
 
 
 

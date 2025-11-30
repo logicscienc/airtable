@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-});
+}); 
 
 // --------------------
 // AUTH ROUTES
@@ -29,6 +29,9 @@ export const loginAirtable = () =>
 
 export const airtableCallback = (code) =>
   api.get(`/auth/callback?code=${code}`);
+
+export const logoutAirtable = () =>
+  api.post("/auth/logout");
 
 // --------------------
 // FORM ROUTES
@@ -58,7 +61,8 @@ export const deleteResponse = (responseId) =>
 // --------------------
 export const getAirtableBases = () => api.get("/airtable/bases");
 export const getAirtableTables = (baseId) =>
-  api.get(`/airtable/tables/${baseId}`);
+  api.get(`/airtable/tables?baseId=${baseId}`);
+
 export const getAirtableFields = (baseId, tableId) =>
   api.get(`/airtable/fields/${baseId}/${tableId}`);
 

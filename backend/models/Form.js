@@ -17,6 +17,7 @@ const FormSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    title: { type: String, required: true },
 
     // All form questions
     questions: [

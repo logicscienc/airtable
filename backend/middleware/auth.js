@@ -1,8 +1,7 @@
 const jwt = require("jsonwebtoken");
-
 require("dotenv").config();
 
-module.exports = async function authMiddleware(req, res, next) {
+module.exports = function authMiddleware(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
 
@@ -12,16 +11,25 @@ module.exports = async function authMiddleware(req, res, next) {
 
     const token = authHeader.split(" ")[1];
 
-    // Verify token
+    // Decode JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Attach user ID to the request for later use
+    // Attach entire payload
+    req.user = decoded;
+
+    // Attach userId
     req.userId = decoded.userId;
+
+    // Attach Airtable tokens (if they exist in JWT)
+    req.airtableAccessToken = decoded.airtableAccessToken || null;
+    req.airtableRefreshToken = decoded.airtableRefreshToken || null;
 
     next();
   } catch (err) {
     console.error("Auth middleware error:", err);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
-}; 
+};
+
+
 

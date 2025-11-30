@@ -48,27 +48,51 @@ export default function CreateForm({ onFormCreated }) {
   // --------------------------------------------------
   // 3. Auto-generate Questions when Table is selected
   // --------------------------------------------------
-  useEffect(() => {
-    if (!selectedTable) return;
+ // --------------------------------------------------
+// 3. Auto-generate Questions when Table is selected
+// --------------------------------------------------
+useEffect(() => {
+  if (!selectedTable) return;
 
-    const table = tables.find((t) => t.id === selectedTable);
+  const table = tables.find((t) => t.id === selectedTable);
 
-    if (!table || !Array.isArray(table.fields)) {
-      setQuestions([]);
-      return;
+  if (!table || !Array.isArray(table.fields)) {
+    setQuestions([]);
+    return;
+  }
+
+  // Map Airtable field types to allowed Mongoose types
+  const mapAirtableTypeToFormType = (airtableType) => {
+    switch (airtableType) {
+      case "singleLineText":
+      case "email":
+      case "phoneNumber":
+        return "singleLineText";
+      case "multilineText":
+        return "longText";
+      case "singleSelect":
+        return "singleSelect";
+      case "multipleSelects":
+        return "multipleSelects";
+      case "attachment":
+        return "attachment";
+      default:
+        return "singleLineText"; // fallback for unknown types
     }
+  };
 
-    const mappedQuestions = table.fields.map((field, idx) => ({
-      questionKey: `q${idx + 1}`,
-      airtableFieldId: field.id,
-      label: field.name,
-      type: field.type || "singleLineText",
-      required: false,
-      conditionalRules: { logic: "AND", conditions: [] },
-    }));
+  const mappedQuestions = table.fields.map((field, idx) => ({
+    questionKey: `q${idx + 1}`,
+    airtableFieldId: field.id,
+    label: field.name,
+    type: mapAirtableTypeToFormType(field.type),
+    required: false,
+    conditionalRules: { logic: "AND", conditions: [] },
+  }));
 
-    setQuestions(mappedQuestions);
-  }, [selectedTable, tables]);
+  setQuestions(mappedQuestions);
+}, [selectedTable, tables]);
+
 
   // Update individual question
   const handleQuestionChange = (index, key, value) => {

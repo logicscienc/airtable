@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { logoutAirtable } from "../api";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -11,11 +12,21 @@ export default function Navbar() {
     setLoggedIn(!!token);
   }, []);
 
-  const handleLogout = () => {
+const handleLogout = async () => {
+  try {
+    // 1️ Call backend to clear cookies
+    await logoutAirtable();
+
+    // 2️ Clear frontend token
     localStorage.removeItem("token");
+    
+    // 3️ Update state & redirect
     setLoggedIn(false);
     navigate("/login");
-  };
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+};
 
   return (
     <nav className="bg-white shadow-sm">

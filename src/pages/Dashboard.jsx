@@ -2,27 +2,24 @@ import { useState, useEffect } from "react";
 import { getMyForms } from "../api"; // your API helper
 import { useNavigate } from "react-router-dom";
 import CreateForm from "./CreateForm";
-import FormDetails from "./FormDetails";
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("home"); // "home", "createForm", "formDetails"
+  const [activeTab, setActiveTab] = useState("home"); // "home" or "createForm"
   const [forms, setForms] = useState([]);
-  const [selectedFormId, setSelectedFormId] = useState(null);
   const navigate = useNavigate();
 
-useEffect(() => {
-  const fetchForms = async () => {
-    try {
-      const res = await getMyForms();
-      console.log(res.data); // inspect what you got
-      // if backend returns { forms: [...] }
-      setForms(Array.isArray(res.data) ? res.data : res.data.forms || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-  fetchForms();
-}, []);
+  useEffect(() => {
+    const fetchForms = async () => {
+      try {
+        const res = await getMyForms();
+        console.log("Forms loaded:", res.data);
+        setForms(res.data?.data || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchForms();
+  }, []);
 
   // Sidebar links
   const tabs = [
@@ -40,10 +37,7 @@ useEffect(() => {
           {tabs.map((tab) => (
             <button
               key={tab.key}
-              onClick={() => {
-                setActiveTab(tab.key);
-                setSelectedFormId(null); // reset selected form
-              }}
+              onClick={() => setActiveTab(tab.key)}
               className={`block w-full text-left px-4 py-2 rounded-md hover:bg-white hover:text-[#FA1239] transition ${
                 activeTab === tab.key ? "bg-white text-[#FA1239]" : ""
               }`}
@@ -85,22 +79,32 @@ useEffect(() => {
                     <p>Airtable Base: {form.airtableBaseId}</p>
                     <p>Airtable Table: {form.airtableTableId}</p>
                     <div className="mt-4 flex space-x-2">
-                      <button
-                        className="px-3 py-1 bg-[#FA1239] text-white rounded hover:opacity-80 transition"
-                        onClick={() => {
-                          setSelectedFormId(form._id);
-                          setActiveTab("formDetails");
-                        }}
-                      >
-                        View
-                      </button>
-                      <button
-                        className="px-3 py-1 bg-[#FA1239] text-white rounded hover:opacity-80 transition"
-                        onClick={() => setActiveTab("createForm")}
-                      >
-                        Edit
-                      </button>
-                    </div>
+  {/* Navigate to Form View Page */}
+  <button
+    className="px-3 py-1 bg-[#FA1239] text-white rounded hover:opacity-80 transition"
+    onClick={() => navigate(`/form/${form._id}`)}
+  >
+    View
+  </button>
+
+  {/* Navigate to Form Edit Page */}
+  <button
+    className="px-3 py-1 bg-[#FA1239] text-white rounded hover:opacity-80 transition"
+    onClick={() => navigate(`/form/${form._id}/edit`)}
+  >
+    Edit
+  </button>
+
+  {/* Navigate to Responses Page */}
+  <button
+  className="px-3 py-1 bg-[#FA1239] text-white rounded hover:opacity-80 transition"
+  onClick={() => navigate(`/form/${form._id}/responses`)}
+>
+  Responses
+</button>
+
+</div>
+
                   </div>
                 ))}
               </div>
@@ -114,14 +118,10 @@ useEffect(() => {
             onFormCreated={(newForm) => setForms([...forms, newForm])}
           />
         )}
-
-        {/* Form Details */}
-        {activeTab === "formDetails" && selectedFormId && (
-          <FormDetails formId={selectedFormId} />
-        )}
       </div>
     </div>
   );
 }
+
 
 
