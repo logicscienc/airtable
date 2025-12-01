@@ -6,14 +6,15 @@ import air from "../assert/airtable.png";
 export default function Login() {
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    try {
-      window.location.href = "http://localhost:4000/api/v1/auth/login";
-    } catch (err) {
-      console.error(err);
-      toast.error("Login failed. Please try again.");
-    }
-  };
+ const handleLogin = async () => {
+  try {
+    window.location.href = "https://airtablebackend-wrf0.onrender.com/api/v1/auth/login";
+  } catch (err) {
+    console.error(err);
+    toast.error("Login failed. Please try again.");
+  }
+};
+
 
   return (
     <div
