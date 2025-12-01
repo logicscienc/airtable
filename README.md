@@ -76,3 +76,73 @@ function shouldShowQuestion(
   rules: ConditionalRules | null,
   answersSoFar: Record<string, any>
 ): boolean
+```
+
+Environment Variables (.env.example)
+```
+# JWT Secret
+JWT_SECRET=jwt_secret_here
+
+# General App Settings
+FOLDER_NAME=Airtable
+PORT=4000
+
+# MongoDB
+MONGODB_URL=mongodb_connection_string_here
+
+# Cloudinary (for attachments, if used)
+CLOUD_NAME=cloud_name_here
+API_KEY=cloud_api_key_here
+API_SECRET=cloud_api_secret_here
+
+# Airtable OAuth
+AIRTABLE_CLIENT_ID=airtable_client_id_here
+AIRTABLE_CLIENT_SECRET=airtable_client_secret_here
+AIRTABLE_REDIRECT_URI=http://localhost:4000/api/v1/auth/callback
+
+# Airtable API URLs
+AIRTABLE_API_URL=https://api.airtable.com/v0
+AIRTABLE_OAUTH_TOKEN_URL=https://airtable.com/oauth2/v1/token
+AIRTABLE_AUTHORIZE_URL=https://airtable.com/oauth2/v1/authorize
+
+# App URLs
+FRONTEND_URL=https://airtable-brown.vercel.app
+SERVER_BASE_URL=http://localhost:4000
+
+# Airtable Webhook Secret
+AIRTABLE_WEBHOOK_SECRET=airtable_webhook_secret_here
+```
+Setup Instructions
+Backend
+
+1. Clone the repository and navigate to /backend.
+
+2. Install dependencies:
+ ```
+ npm install
+```
+3.Create .env from .env.example and fill your credentials.
+4.Start the server:
+```
+npm start
+```
+5. The backend runs on the configured port (default: 5000).
+
+Frontend
+
+1.Navigate to /frontend.
+
+2.Install dependencies:
+```
+npm install
+```
+3. Configure frontend .env if needed (Airtable redirect URI, backend URL).
+4. Start the frontend:
+   ```
+   npm start
+   ```
+5. Access the app on http://localhost:3000.
+
+License
+
+This project is for educational purposes and interview evaluation.
