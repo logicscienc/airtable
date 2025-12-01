@@ -1,31 +1,78 @@
-# React & Tailwind CSS Starter Pack
+# Airtable-Connected Dynamic Form Builder
 
-This is a starter pack for creating React projects with Tailwind CSS configured. It uses React version **18.2** and Tailwind CSS version **3.2**.
+## Project Overview
+This is a **full-stack MERN application** that allows users to create dynamic forms connected to Airtable. The application integrates **Airtable OAuth**, supports **conditional logic for form questions**, and saves responses to both **MongoDB** and **Airtable**. Additionally, the app syncs data using **Airtable Webhooks**, ensuring the database reflects real-time updates from Airtable.
 
-## Usage
+The focus of this project is **correctness, data modeling, and business logic** rather than UI design.
 
-This starter pack includes a basic setup for using **Tailwind CSS with React**. To start building your own components and styles, follow these steps:
+---
 
-1. Clone the repository to your local machine.
-    ```sh
-    git clone https://github.com/thepranaygupta/react-tailwind-css-starter-pack.git
-    ```
+## Live Demo
+- **Frontend (React):** [https://airtable-brown.vercel.app/](https://airtable-brown.vercel.app/)  
+- **Backend (Express + MongoDB):** [https://airtablebackend-wrf0.onrender.com/](https://airtablebackend-wrf0.onrender.com/)  
+- **Demo Video:** [Watch Demo](https://drive.google.com/file/d/1Syj68ZypxfhIC61oyDoATuoIZzXV5-pS/view?usp=sharing)  
 
-1. Install the required packages.
-    ```sh
-    cd react-tailwind-css-starter-pack
-    npm install
-    ```
+---
 
-1. Start the development server.
-    ```sh
-    npm start
-    ```
-1. Open the project in your browser at [`http://localhost:3000`](http://localhost:3000) to view your project.
-1. Create your React components and add your styles using Tailwind classes. You can also create new CSS files and import them into your components.
+## Tech Stack
+- **Frontend:** React.js  
+- **Backend:** Node.js + Express  
+- **Database:** MongoDB  
+- **Authentication:** Airtable OAuth 2.0  
+- **External API:** Airtable REST API + Webhooks  
+- **Deployment:** Vercel (Frontend), Render (Backend)  
 
-The project is set up to use `postcss-cli` to process your CSS files. You can add your own `tailwind.config.js` file to customize your Tailwind setup.
+---
 
-## Contributing
+## Core Features
 
-Contributions are welcome! If you have any suggestions or find any issues, please feel free to open an issue or a pull request.
+### 1. Airtable OAuth Login
+- Users can log in via **Airtable OAuth**.  
+- On successful login, the following is stored in MongoDB:
+  - Airtable `userId` and basic profile
+  - OAuth `accessToken` & `refreshToken`
+  - Login timestamp  
+
+### 2. Form Builder
+Authenticated users can:
+- Select an Airtable Base and Table from their account.  
+- Fetch all fields from the table.  
+- Include selected fields in the form.  
+- Rename question labels (optional).  
+- Mark fields as required or optional.  
+- Define **conditional logic rules** for dynamic question visibility.  
+
+Stored in MongoDB as a form schema:
+- `formOwner`  
+- `airtableBaseId`  
+- `airtableTableId`  
+- List of questions:
+  - `questionKey` (internal)  
+  - `airtableFieldId`  
+  - `label`  
+  - `type`  
+  - `required`  
+  - `conditionalRules`  
+
+---
+
+### 3. Supported Question Types
+- Short text  
+- Long text  
+- Single select  
+- Multi select  
+- Attachment (file upload)  
+
+> Unsupported Airtable field types are automatically rejected at the backend.
+
+---
+
+### 4. Conditional Logic
+- Each question can have multiple conditions combined with `AND` or `OR`.  
+- Conditional rules are evaluated via a **pure function**:
+
+```ts
+function shouldShowQuestion(
+  rules: ConditionalRules | null,
+  answersSoFar: Record<string, any>
+): boolean
