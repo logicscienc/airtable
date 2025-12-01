@@ -14,34 +14,37 @@ const dotenv = require("dotenv");
 dotenv.config();
 const PORT = process.env.PORT || 4000;
 
-
-//database connect
+// database connect
 database.connect();
-//middlewares
+
+// middlewares
 app.use(express.json());
 app.use(cookieParser());
 
 app.use(
-	cors({
-		origin:"http://localhost:3000",
-		credentials:true,
-	})
-)
+  cors({
+    origin: process.env.FRONTEND_URL, 
+    credentials: true,
+  })
+);
+
+// Render health check
+app.get("/healthz", (req, res) => res.send("OK"));
 
 // routes
 app.use("/api/v1/auth", Auth);
 app.use("/api/v1/form", Form);
 app.use("/api/v1/response", Response);
-app.use("/webhooks", Webhook); 
-app.use("/api/v1/airtable", Airtable); 
+app.use("/webhooks", Webhook);
+app.use("/api/v1/airtable", Airtable);
 
 app.get("/", (req, res) => {
-	return res.json({
-		success:true,
-		message:'Your server is up and running....'
-	});
+  res.json({
+    success: true,
+    message: "Your server is up and running...."
+  });
 });
 
 app.listen(PORT, () => {
-	console.log(`App is running at ${PORT}`)
-}) 
+  console.log(`App is running at ${PORT}`)
+});
